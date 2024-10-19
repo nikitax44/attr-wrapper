@@ -29,7 +29,7 @@ pub fn time_me(attr: TokenStream, item: TokenStream) -> TokenStream {
     quote!(
         #(#attrs)*
         #vis #sig {
-            let __start = Instant::now();
+            let __start = crate::Instant::now();
 
             let __result = {
                 #(#statements)*
