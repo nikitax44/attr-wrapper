@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
@@ -35,7 +36,7 @@ pub fn time_me(attr: TokenStream, item: TokenStream) -> TokenStream {
                 #(#statements)*
             };
 
-            crate::println!("{} took {:?}", stringify!(#function_identifier), __start.elapsed());
+            ::log::trace!("{} took {:?}", stringify!(#function_identifier), __start.elapsed());
 
             return __result;
         }
