@@ -30,15 +30,15 @@ pub fn time_me(attr: TokenStream, item: TokenStream) -> TokenStream {
     quote!(
         #(#attrs)*
         #vis #sig {
-            let __start = crate::Instant::now();
+            struct PerfGuard(crate::Instant);
+            impl ::core::ops::Drop for PerfGuard {
+                fn drop(&mut self) {
+                    ::log::debug!("perf: {} took {:?}", stringify!(#function_identifier), self.0.elapsed());
+                }
+            }
+            let _guard = PerfGuard(crate::Instant::now());
 
-            let __result = {
-                #(#statements)*
-            };
-
-            ::log::trace!("{} took {:?}", stringify!(#function_identifier), __start.elapsed());
-
-            return __result;
+            #(#statements)*
         }
     )
     .into()
