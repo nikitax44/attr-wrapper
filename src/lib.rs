@@ -33,7 +33,10 @@ pub fn time_me(attr: TokenStream, item: TokenStream) -> TokenStream {
             struct PerfGuard(crate::Instant);
             impl ::core::ops::Drop for PerfGuard {
                 fn drop(&mut self) {
-                    ::log::debug!("perf: {} took {:?}", stringify!(#function_identifier), self.0.elapsed());
+                    let elapsed = self.0.elapsed();
+                    if (elapsed > ::core::time::Duration::MILLISECOND*50) {
+                        ::log::debug!("perf: {} took {:?}", stringify!(#function_identifier), elapsed);
+                    }
                 }
             }
             let _guard = PerfGuard(crate::Instant::now());
