@@ -38,17 +38,14 @@ pub fn time_me(attr: TokenStream, item: TokenStream) -> TokenStream {
                 fn drop(&mut self) {
                     let now = crate::Instant::now();
                     let elapsed = now - self.0;
-                    if (elapsed >= ::core::time::Duration::new(#thr_sec, #thr_nan)) {
-                        ::log::debug!("perf: {} took {:?}", stringify!(#function_identifier), elapsed);
-                    }
-                    if #verbose {
-                        ::log::debug!("perf: leave {} at {}", stringify!(#function_identifier), now);
+                    if (#verbose || elapsed >= ::core::time::Duration::new(#thr_sec, #thr_nan)) {
+                        ::log::debug!("perf: {} took {:?} to finish", stringify!(#function_identifier), elapsed);
                     }
                 }
             }
             let guard = PerfGuard(crate::Instant::now());
             if #verbose {
-                ::log::debug!("perf: enter {} at {}", stringify!(#function_identifier), guard.0);
+                ::log::debug!("perf: entering {}", stringify!(#function_identifier), guard.0);
             }
 
             #(#statements)*
