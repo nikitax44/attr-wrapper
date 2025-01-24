@@ -45,7 +45,7 @@ pub fn time_me(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
             let guard = PerfGuard(crate::Instant::now());
             if #verbose {
-                ::log::debug!("perf: entering {}", stringify!(#function_identifier), guard.0);
+                ::log::debug!("perf: entering {}", stringify!(#function_identifier));
             }
 
             #(#statements)*
