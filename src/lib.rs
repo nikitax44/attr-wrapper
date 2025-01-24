@@ -16,6 +16,7 @@ pub fn time_me(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
     let thr_sec = thresh.as_secs();
     let thr_nan = thresh.subsec_nanos();
+    let verbose = thr_sec == 0 && thr_nan == 0;
 
     let ItemFn {
         sig,
@@ -31,16 +32,24 @@ pub fn time_me(attr: TokenStream, item: TokenStream) -> TokenStream {
     quote!(
         #(#attrs)*
         #vis #sig {
+
             struct PerfGuard(crate::Instant);
             impl ::core::ops::Drop for PerfGuard {
                 fn drop(&mut self) {
-                    let elapsed = self.0.elapsed();
-                    if (elapsed > ::core::time::Duration::new(#thr_sec, #thr_nan)) {
+                    let now = crate::Instant::now();
+                    let elapsed = now - self.0;
+                    if (elapsed >= ::core::time::Duration::new(#thr_sec, #thr_nan)) {
                         ::log::debug!("perf: {} took {:?}", stringify!(#function_identifier), elapsed);
+                    }
+                    if #verbose {
+                        ::log::debug!("perf: leave {} at {}", stringify!(#function_identifier), now);
                     }
                 }
             }
-            let _guard = PerfGuard(crate::Instant::now());
+            let guard = PerfGuard(crate::Instant::now());
+            if #verbose {
+                ::log::debug!("perf: enter {} at {}", stringify!(#function_identifier), guard.0);
+            }
 
             #(#statements)*
         }
@@ -59,10 +68,13 @@ impl Parse for Dur {
         let Lit::Int(lit) = lit else {
             return Err(Error::new(lit.span(), "unexpected literal: expected Int"));
         };
-        if lit.suffix() != "ms" {
+        if lit.suffix() != "ms" && lit.base10_digits() != "0" {
             return Err(Error::new(
                 lit.span(),
-                format_args!("unexpected literal suffix: {}, expected `ms`", lit.suffix()),
+                format_args!(
+                    "unexpected literal suffix: `{}`, expected `ms`",
+                    lit.suffix()
+                ),
             ));
         }
         let ms: u64 = lit.base10_parse()?;
